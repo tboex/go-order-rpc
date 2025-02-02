@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package orderpb;
+
+option go_package = "go-order-rpc/api/proto;orderpb";
+
+service OrderService {
+    rpc CreateOrder (OrderRequest) returns (OrderResponse);
+}
+
+message OrderRequest {
+    string item = 1;
+    int32 quantity = 2;
+}
+
+message OrderResponse {
+    string orderId = 1;
+    string status = 2;
+}
