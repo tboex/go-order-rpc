@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	orderpb "order-rpc/api/proto"
+	orderpb "go-order-rpc/api/proto"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
