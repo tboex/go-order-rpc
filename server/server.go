@@ -38,7 +38,6 @@ type orderServer struct {
 }
 
 func (s *orderServer) CreateOrder(ctx context.Context, req *orderpb.OrderRequest) (*orderpb.OrderResponse, error) {
-	// Safely increment the order count
 	s.mu.Lock()
 	var orderID int
 
@@ -183,6 +182,55 @@ func (s *orderServer) CreateBulkOrders(stream orderpb.OrderService_CreateBulkOrd
 
 		orderIDs = append(orderIDs, orderIDTag)
 		successCount++
+	}
+}
+
+func (s *orderServer) StreamOrders(stream orderpb.OrderService_StreamOrdersServer) error {
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+
+		if err != nil {
+			s.logger.Errorf("Error receiving stream: %v", err)
+			return err
+		}
+
+		s.logger.Infow("Received order",
+			"item", req.Item,
+			"action", req.Quantity,
+		)
+
+		s.mu.Lock()
+		var orderID int
+
+		err = s.db.QueryRow("INSERT INTO orders (item, quantity) VALUES ($1, $2) RETURNING id", req.Item, req.Quantity).Scan(&orderID)
+		if err != nil {
+			return err
+		}
+
+		orderKey := fmt.Sprintf("order:%d", orderID)
+		orderVal := fmt.Sprintf("Item=%s, Quantity=%d", req.Item, req.Quantity)
+
+		// Store in Redis with cache duration
+		s.cache.Set(stream.Context(), orderKey, orderVal, 10*time.Minute)
+
+		s.mu.Unlock()
+
+		// Simulate order processing
+		response := &orderpb.OrderResponse{
+			OrderId:  "1",
+			Status:   "Shipping",
+			Item:     req.Item,
+			Quantity: req.Quantity,
+		}
+
+		// Send response to client
+		if err := stream.Send(response); err != nil {
+			s.logger.Errorf("Error sending response: %v", err)
+			return err
+		}
 	}
 }
 

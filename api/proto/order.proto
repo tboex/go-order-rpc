@@ -9,6 +9,7 @@ service OrderService {
     rpc GetOrder (OrderRequestID) returns (OrderResponse);
     rpc TrackOrderStatus (OrderRequestID) returns (stream OrderStatusUpdate);
     rpc CreateBulkOrders (stream OrderRequest) returns (BulkOrderResponse);
+    rpc StreamOrders (stream OrderRequest) returns (stream OrderResponse);
 }
 
 message OrderRequest {
