@@ -6,6 +6,9 @@ option go_package = "go-order-rpc/api/proto;orderpb";
 
 service OrderService {
     rpc CreateOrder (OrderRequest) returns (OrderResponse);
+    rpc GetOrder (OrderRequestID) returns (OrderResponse);
+    rpc TrackOrderStatus (OrderRequestID) returns (stream OrderStatusUpdate);
+    rpc CreateBulkOrders (stream OrderRequest) returns (BulkOrderResponse);
 }
 
 message OrderRequest {
@@ -13,9 +16,24 @@ message OrderRequest {
     int32 quantity = 2;
 }
 
+message OrderRequestID {
+    string order_id = 1;
+}
+
 message OrderResponse {
-    string orderId = 1;
+    string order_id = 1;
     string status  = 2;
     string item    = 3;
     int32 quantity = 4;
+}
+
+message OrderStatusUpdate {
+    string order_id = 1;
+    string status = 2;
+    string estimated_delivery = 3;
+}
+
+message BulkOrderResponse {
+    int32 success_count = 1;
+    repeated string order_ids = 2;
 }
